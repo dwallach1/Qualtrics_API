@@ -22,13 +22,12 @@ def download_responses(surveyId, format_type):
 	format_type can be csv, json, or spss
 	"""
 
-	# data = '{{"surveyId": "{0}", "format": "{1}"}}'.format(surveyId, format_type)
 	data = '{{"surveyId": {0}, "format": "{1}"}}'.format(surveyId, format_type)
-	baseUrl = 'https://{0}.qualtrics.com/API/v3/responseexports'.format(dataCenter)
+	baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports".format(dataCenter)
 	response = requests.post(baseUrl, headers=headers, data=data)
 	
 	if response.status_code != 200:
-		print ('error making post request to initate download for survey {} -- aborted'.format(surveyId))
+		print ("error making post request to initate download for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
 		return
 
 	print ('successfully sent request to Qualtrics servers')
@@ -45,16 +44,12 @@ def download_responses(surveyId, format_type):
 
 		print ("\rcompletion percentage:", percent, "%", end='\r')
 
-		if status == 'complete':
+		if status == "complete":
 			done = True
 
 		elif status == "cancelled" or status == "failed":
-			print("error while generating download -- aborted")
+			print("error while generating download for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
 			return
-
-		else:
-			time.sleep(5)
-
 
 	print ("\nsuccessfully generated file, attempting to download...")
 
@@ -62,10 +57,13 @@ def download_responses(surveyId, format_type):
 	response = requests.get(baseUrl, headers=headers, stream=True)
 
 	if response.status_code != 200:
-		print ("error downloading file -- aborted")
+		print ("error downloading file for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
 		return
 
-	handle = open("{}_{}_response.zip".format(surveyId, format_type), "wb")
+
+	if not os.path.exists('downloads'):
+		os.mkdir('downloads')
+	handle = open("downloads/{}_{}_response.zip".format(surveyId, format_type), "wb")
 	for chunk in response.iter_content(chunk_size=512):
 		if chunk: 
 			handle.write(chunk)
@@ -82,11 +80,11 @@ def list_all_surveys():
 
 	Returns an array of SurveyIds
 	"""
-	baseUrl = 'https://{0}.qualtrics.com/API/v3/surveys'.format(dataCenter)
+	baseUrl = "https://{0}.qualtrics.com/API/v3/surveys".format(dataCenter)
 	response = requests.get(baseUrl, headers=headers)
 
 	if response.status_code != 200:
-		print ('error making post request to initate download -- aborted')
+		print ("error making post request to initate download -- aborted with status_code {}".format(surveyId, response.status_code))
 		return
 
 	ids = []
@@ -99,13 +97,11 @@ def list_all_surveys():
 		response = requests.get(nextPage, headers=headers)
 
 		if response.status_code != 200:
-			print ('error making post request to initate download -- aborted')
+			print ("error making post request to initate download -- aborted with status_code {}".format(surveyId, response.status_code))
 			return
 
 		nextPage = response.json()['result']['nextPage']
 		for element in response.json()['result']['elements']: ids.append(element['id'])
-
-	print (ids)
 
 	return ids
 
@@ -113,7 +109,7 @@ def list_all_surveys():
 
 
 surveyIds = list_all_surveys()
-print ('found {} total surveys in your library'.format(len(surveyIds)))
+print ("found {} total surveys in your library".format(len(surveyIds)))
 for surveyId in surveyIds:
 	double_quotes_id = '"' + surveyId + '"' 	# necessary for JSON
 	download_responses(double_quotes_id, "csv")
