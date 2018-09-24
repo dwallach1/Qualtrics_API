@@ -1,8 +1,7 @@
-import os
-import sys
-import requests, zipfile, io
+import os, sys
+import requests
+import zipfile, io
 import json
-import time
 
 apiToken = os.environ["Q_API_TOKEN"]     
 dataCenter = os.environ["Q_DATA_CENTER"] 
@@ -14,13 +13,14 @@ headers = {
 }
 
 
-
 def download_responses(surveyId, format_type):
 	"""
 	Download all responses from a survey
 
 	format_type can be csv, json, or spss
 	"""
+
+	print ("Starting to download {}".format(surveyId))
 
 	data = '{{"surveyId": {0}, "format": "{1}"}}'.format(surveyId, format_type)
 	baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports".format(dataCenter)
@@ -73,7 +73,6 @@ def download_responses(surveyId, format_type):
 	print ("successfully downloaded file\ndone.")
 	return
 
-
 def list_all_surveys():
 	"""
 	Get the Survey IDs of all surveys in your account
@@ -104,8 +103,6 @@ def list_all_surveys():
 		for element in response.json()['result']['elements']: ids.append(element['id'])
 
 	return ids
-
-
 
 
 surveyIds = list_all_surveys()
