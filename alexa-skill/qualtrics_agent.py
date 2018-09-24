@@ -7,6 +7,8 @@ apiToken = os.environ["Q_API_TOKEN"]
 dataCenter = os.environ["Q_DATA_CENTER"] 
 libraryId = os.environ["Q_LIBRARY"]
 
+surveyId = 'SV_01dtmd5EwhWdP7v'
+
 headers = {
 	"X-API-TOKEN": apiToken,
 	"Content-Type": "application/json",
@@ -164,6 +166,7 @@ def get_mailinglist():
 		print ("Error creating new mailinglist for {0} (error code: {1})".format(appId, response.status_code))
 		return None
 
+	print("Successfully created a new mailinglist")
 	return response.json()['result']['id']
 
 
@@ -216,6 +219,7 @@ def get_contact(mailinglistId):
 		print ("Error creating new contact for {0} (error code: {1})".format(this_echo, response.status_code))
 		return None
 
+	print ("Successfully created a new contact.")
 	return response.json()['result']['id']
 
 
@@ -239,9 +243,75 @@ def update_contact(mailinglistId, contact):
 
 	if response.status_code != 200:
 		print ("Error updating contact {0} (error code: {1})".format(contactId, response.status_code))
+		return None
 	
 	print ("Successfully recorded interation in Qualtrics.")
 	return None
+
+
+def create_survey_session():
+	"""
+	Starts a new survey session to submit user's answers and record in qualtrics
+	"""
+	print ("Attempting to create a new survey session") 
+	
+	data = "{\"language\": \"EN\"}"
+	baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/".format(dataCenter, surveyId)
+	response = requests.post(baseUrl, headers=headers, data=data)
+
+	
+	# pp.pprint (response.json())
+
+	if response.status_code != 201:
+		print ("Error creating new survey session (error code: {0})".format(response.status_code))
+		return None
+
+	
+	
+	print ("Successfully created new survey session ({0}).".format(survey_sessionId))
+	return response.json()
+
+
+def update_survey_session(survey_sessionId):
+	"""
+	Update the current survey session with additional questions answered.
+	"""
+	print ("Attempting to update survey session {0}".format(survey_sessionId)) 
+	data = '{{"close": "True"}}'
+	baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/{2}".format(dataCenter, surveyId)
+	
+	response = requests.post(baseUrl, headers=headers, data=data)
+
+	if response.status_code != 200:
+		print ("Error updating the survey session (error code: {0})".format(response.status_code))
+		return None
+
+	print ("Successfully updated the current survey session ({0})".format(survey_sessionId))
+	return None
+
+
+def close_survey_session(survey_sessionId):
+	"""
+	Close the current survey session. 
+	"""
+	print ("Attempting to close survey session {0}".format(survey_sessionId)) 
+
+	data = '{{"close": "True"}}'
+	baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/{2}".format(dataCenter, surveyId)
+	response = requests.post(baseUrl, headers=headers, data=data)
+
+	if response.status_code != 200:
+		print ("Error closing the survey session (error code: {0})".format(response.status_code))
+		return None
+
+	print ("Successfully closed the survey session.")
+	return None
+
+
+def ask(question):
+	"""
+	"""
+	pass
 
 
 def Qualtrics_connect():
@@ -249,9 +319,21 @@ def Qualtrics_connect():
 	Parent function for communicating with Qualtrics APIs
 	"""
 	print ("Connecting to Qualtrics' servers...")
-	mailinglistId = get_mailinglist()
-	contact = get_contact(mailinglistId)
-	update_contact(mailinglistId, contact)
+	survey_session = create_survey_session()
+	survey_sessionId = survey_session['result']['sessionId']
+	questions = survey_session['result']['questions']
+	for question in questions:
+		ask(question)
+		
+	# update_survey_session(survey_sessionId)
+	# close_survey_session(survey_sessionId)
+
+
+	# mailinglistId = get_mailinglist()
+	# contact = get_contact(mailinglistId)
+	# update_contact(mailinglistId, contact)
+
+	
 
 
 
