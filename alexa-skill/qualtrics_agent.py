@@ -1,7 +1,7 @@
 import os, sys
 import requests
-import zipfile, io
 import json
+import datetime
 
 apiToken = os.environ["Q_API_TOKEN"]     
 dataCenter = os.environ["Q_DATA_CENTER"] 
@@ -12,6 +12,7 @@ headers = {
 	"Content-Type": "application/json",
 }
 
+"""
 
 from ask_sdk_core.skill_builder import SkillBuilder
 
@@ -124,7 +125,10 @@ handler = sb.lambda_handler()
 
 userId = event['session']['user']['userId']
 appId = event['context']['application']['applicationId'].split('.')[-1]
+"""
 
+userId = "alexa-test-userid"
+appId = "alexa-test-appId"
 
 
 def get_mailinglist():
@@ -135,21 +139,30 @@ def get_mailinglist():
 	Returns the MailinglistId associated with this project
 	"""
 
+	print ("Attempting to find {0}'s associated contact list".format(appId))
+
 	baseUrl = "https://{0}.qualtrics.com/API/v3/mailinglists".format(dataCenter)
 	response = requests.get(baseUrl, headers=headers)
 
+	if response.status_code != 200:
+		print ("Error retrieving potential mailinglists for {} (error code: {1})".format(appId, response.status_code))
+		return None
+
 	for elem in response.json()['result']['elements']:
 		if elem['name'] == appId:
+			print ("Found a mailinglist ({0}) associated with {1}".format(elem['id'], appId))
 			return elem['id']
 
 
 	# no mailinglist for this application exists -- create a new one
+	print ("No mailinglist associated with {0} exists. Creating a new one".format(appId))
+
 	data = '{{"libraryId": "{0}", "name": "{1}"}}'.format(libraryId, appId)
 	response = requests.post(baseUrl, headers=headers, data=data)
 
 	if response.status_code != 200:
-		print ('error creating new mailinglist for {}\'s connected Qualtrics project'.format(appId))
-		return
+		print ("Error creating new mailinglist for {0} (error code: {1})".format(appId, response.status_code))
+		return None
 
 	return response.json()['result']['id']
 
@@ -162,13 +175,15 @@ def get_contact(mailinglistId):
 	Returns the contactId associated with the echo making the call
 	"""
 
+	print ("Attempting to find this {0}'s associated contact in the mailinglist {1}".format(userId, mailinglistId)) 
+
 	baseUrl = "https://{0}.qualtrics.com/API/v3/mailinglists/{1}/contacts".format(dataCenter, mailinglistId)
 	response = requests.get(baseUrl, headers=headers)
 
 
 	if response.status_code != 200:
-		print ('error finding retrieving contacts from Qualtrics for mailinglist {}'.format(mailinglistId))
-		return
+		print ("Error finding retrieving contacts from mailinglist {0} (error code: {1})".format(mailinglistId, response.status_code))
+		return None
 
 	nextPage = response.json()['result']['nextPage']
 	contacts = response.json()['result']['elements']
@@ -177,11 +192,9 @@ def get_contact(mailinglistId):
 
 		response = requests.get(nextPage, headers=headers)
 
-
 		if response.status_code != 200:
-			print ('error finding retrieving contacts (nextPage) from Qualtrics for mailinglist {}'.format(mailinglistId))
-			return
-
+			print ("Error finding retrieving contacts (nextPage) for mailinglist {0} (error code: {1})".format(mailinglistId, response.status_code))
+			return None
 
 		nextPage = response.json()['result']['nextPage']
 		contacts.extend(response.json()['result']['elements'])
@@ -190,30 +203,57 @@ def get_contact(mailinglistId):
 
 	for contact in contacts:
 		if this_echo == contact['email']:
-			return contact['id']
+			return contact
 
 
 	# no contact for this echo exists -- create a new one
+	print ("No contact associated with {0} exists. Creating a new one".format(appId))
+
 	data = '{{"email": "{0}", "externalDataRef": "{1}"}}'.format(this_echo, userId) 
 	response = requests.post(baseUrl, headers=headers, data=data)
 
 	if response.status_code != 200:
-		print ('error creating new contact for {}'.format(this_echo))
-		return
+		print ("Error creating new contact for {0} (error code: {1})".format(this_echo, response.status_code))
+		return None
 
 	return response.json()['result']['id']
 
 
+def update_contact(mailinglistId, contact):
+	"""
+	Update the associated contact for this project in the Qualtrics application.
+	This allows you to track user interactions.
+	"""
+	if isinstance(contact, str):
+		contactId = contact
+		timesSurveyed = 0
+	else:
+		contactId = contact['id']
+		timesSurveyed = 0 if contact['embeddedData'] == None else contact['embeddedData']['TimesSurveyed']
+
+	now = str(datetime.datetime.now())
+
+	data = '{{"embeddedData": {{ "LastSurveyed": "{0}", "TimesSurveyed": "{1}"}}}}'.format(now, int(timesSurveyed)+1) 
+	baseUrl = "https://{0}.qualtrics.com/API/v3/mailinglists/{1}/contacts/{2}".format(dataCenter, mailinglistId, contactId)
+	response = requests.put(baseUrl, headers=headers, data=data)
+
+	if response.status_code != 200:
+		print ("Error updating contact {0} (error code: {1})".format(contactId, response.status_code))
+	
+	print ("Successfully recorded interation in Qualtrics.")
+	return None
 
 
 def Qualtrics_connect():
 	"""
+	Parent function for communicating with Qualtrics APIs
 	"""
+	print ("Connecting to Qualtrics' servers...")
 	mailinglistId = get_mailinglist()
-	contactId = get_contact(mailinglistId)
+	contact = get_contact(mailinglistId)
+	update_contact(mailinglistId, contact)
 
 
 
-
-
+Qualtrics_connect()
 
