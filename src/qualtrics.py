@@ -27,6 +27,11 @@ class Qualtrics(object):
 
 	def get_survey(self, surveyId):
 		"""
+		Gets JSON of survey associated with surveyId
+
+		:surveyId: - string - the ID of the survey you are querying for
+		
+		Returns JSON response 
 		"""
 		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}".format(self.dataCenter, surveyId)
 		response = requests.get(baseUrl, headers=self.headers)
@@ -74,7 +79,10 @@ class Qualtrics(object):
 		"""
 		Download all responses from a survey
 
-		:format_type: - string - can be csv, json, or spss
+		:format_type: - string - can be csv, json, or spss (defaults to "csv")
+		:path: - string - path to download the data (defaults to None)
+
+		Returns None
 		"""
 
 		if verbose: print ("Starting to download {}".format(surveyId))
@@ -134,6 +142,12 @@ class Qualtrics(object):
 
 	def download_all_responses(self, format_type="csv", path=None):
 		"""
+		Download all responses from each survey in your projects page
+
+		:format_type: - string - can be csv, json, or spss (defaults to "csv")
+		:path: - string - path to download the data (defaults to None)
+
+		Returns None
 		"""
 		surveyIds = self.get_all_surveys()
 		if verbose: print ("found {} total surveys in your library".format(len(surveyIds)))
@@ -141,16 +155,102 @@ class Qualtrics(object):
 			self.download_responses(surveyId, "csv")
 
 
-	def create_sesssion(self):
+	def create_sesssion(self, surveyId):
 		"""
+		Starts a new survey session to submit user's answers and record in qualtrics
+
+		:surveyId: - string - survey ID of the survey to start a new response session for
+
+		Returns JSON representing the survey sesssion
 		"""
-		pass
+		print ("Attempting to create a new survey session") 
+		
+		data = "{\"language\": \"EN\"}"
+		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/".format(self.dataCenter, surveyId)
+		response = requests.post(baseUrl, headers=self.headers, data=data)
+
+		
+		if response.status_code != 201:
+			print ("Error creating new survey session (error code: {0})".format(response.status_code))
+			return None
+
+		
+		print ("Successfully created new survey session.")
+		return response.json()
 
 
-	def get_session(self, sessionId):
+	def get_session(self, sessionId, surveyId):
 		"""
+		Get the survey session assocaited with the sessionId.
+
+		:sessionId: - string - ID of the existing session
+		:surveyId: - string - ID of that the session is associated with
+	
+		Returns status of the API call
 		"""
-		pass
+		print ("Attempting to get survey session {0}".format(sessionId)) 
+	
+		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/{2}".format(self.dataCenter, surveyId, sessionId)	
+		response = requests.get(baseUrl, headers=self.headers)
+
+		if response.status_code != 200:
+			print ("Error getting the survey session (error code: {0})".format(response.status_code))
+		else: 
+			print ("Successfully got the current survey session ({0})".format(sessionId))
+		
+		return response.json()
+
+
+	def update_session(self, sessionId, surveyId):
+		"""
+		Update the current survey session with additional questions answered or embedded data set.
+
+		:sessionId: - string - ID of the existing session
+		:surveyId: - string - ID of that the session is associated with
+	
+		Returns status of the API call
+		"""
+		print ("Attempting to update survey session {0}".format(sessionId)) 
+		data = '{"advance": false, \
+		 		 "responses": { \
+		    			} \
+		 		}'
+		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/{2}".format(self.dataCenter, surveyId, sessionId)
+		
+		response = requests.post(baseUrl, headers=self.headers, data=data)
+
+		if response.status_code != 200:
+			print ("Error updating the survey session (error code: {0})".format(response.status_code))
+		else: 
+			print ("Successfully updated the current survey session ({0})".format(sessionId))
+		
+		return response.json()
+
+
+	def close_session(self, sessionId, surveyId):
+		"""
+		Close the current survey session 
+
+		:sessionId: - string - ID of the existing session
+		:surveyId: - string - ID of that the session is associated with
+	
+		Returns status of the API call
+		"""
+		print ("Attempting to close survey session {0}".format(sessionId)) 
+
+		data = '{"close": true}'
+		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/sessions/{2}".format(self.dataCenter, surveyId, sessionId)
+		response = requests.post(baseUrl, headers=self.headers, data=data)
+
+		if response.status_code != 200:
+			print ("Error closing the survey session (error code: {0})".format(response.status_code))
+		else:
+			print ("Successfully closed the survey session.")
+		return response.json()
+
+
+
+		
 
 
 	def ask_question(self, session_json):
@@ -160,19 +260,6 @@ class Qualtrics(object):
 
 
 		pass
-
-
-	def update_session(self, sessionId):
-		"""
-		"""
-		pass
-
-
-	def close_session(self, sessionId):
-		"""
-		"""
-		pass
-
 
 
 		
