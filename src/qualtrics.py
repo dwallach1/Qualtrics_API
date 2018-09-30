@@ -249,17 +249,81 @@ class Qualtrics(object):
 		return response.json()
 
 
+	def answer_questions(self, session, QIDs, answers, advance=False):
+		"""
+		Builds out the data to be sent back to update 
 
-		
+		:session: - string -
+		:QIDs: - list -
+		:answers: - list -
+		:anvance: - bool -
+		"""
+
+		data = {}
+		answer_builder = []
+
+		for i, QID in enumerate(QIDs):
+			if session['result']['question']['type'] == 'mc':
+				if isinstance(answers[i], list):
+
+					pass
+
+				elif isinstance(answers[i], int) or isinstance(answers[i], str):
+
+					pass
+
+				else:
+					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
+					return -1
+
+			elif session['result']['question']['type'] == 'te':
+
+				if isinstance(answers[i], str):
+					answer_str = '"{0}: "{1}"'.format(QID, answers[i])
+					answer_builder.append(answer_str)
+
+			else:
+				print ("Question type {0} is not currently supported by the session API (QID: {1})".format(session['result']['question']['type'], QID))
+				return -1
 
 
-	def ask_question(self, session_json):
+		return data
+
+
+	def update_response(self,):
 		"""
 		"""
-		# if session_json['question']['type'] == 'mc':
-
-
 		pass
 
 
-		
+	def delete_response(self, ):
+		"""
+		"""
+		pass
+
+
+	def delete_all_responses(self,):
+		"""
+		"""
+		pass
+
+
+
+	def create_completedResponse_event(self, surveyId, serverURL):
+		"""
+		"""
+		baseUrl = "https://{0}.qualtrics.com/API/v3/eventsubscriptions".format(self.dataCenter)
+		data = '{"topics": "surveyengine.completedResponse.{}", "publicationUrl": "{}"}'.format(surveyId, serverURL)
+		print(data)
+		response = requests.post(baseUrl, headers=self.headers, data=data)
+
+		print (json.dumps(response.json(), indent=4))
+
+
+
+
+
+
+
+
+

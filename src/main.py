@@ -4,8 +4,15 @@ import json
 from qualtrics import Qualtrics
 
 
-apiToken = os.environ["Q_API_TOKEN"]     
-dataCenter = os.environ["Q_DATA_CENTER"] 
+# # TA
+# apiToken = os.environ["Q_API_TOKEN"]     
+# dataCenter = os.environ["Q_DATA_CENTER"] 
+# library = os.environ["Q_LIBRARY"] 
+
+# CO
+apiToken = os.environ["Q_API_TOKEN_1"]     
+dataCenter = os.environ["Q_DATA_CENTER_1"]
+library = os.environ["Q_LIBRARY_1"] 
 
 
 qualtrics = Qualtrics(apiToken, dataCenter)
@@ -45,9 +52,9 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 
 
 # Get an exisitng session
-sessionId = "FS_Q51Cum30LK1z85j"
-session_get_response = qualtrics.get_session("FS_Q51Cum30LK1z85j","SV_eDwgadvLh4MLhf7")
-print (json.dumps(session_get_response, indent=4))
+# sessionId = "FS_Q51Cum30LK1z85j"
+# session_get_response = qualtrics.get_session("FS_Q51Cum30LK1z85j","SV_eDwgadvLh4MLhf7")
+# print (json.dumps(session_get_response, indent=4))
 
 
 
@@ -55,3 +62,14 @@ print (json.dumps(session_get_response, indent=4))
 # sessionId = "FS_8crClCLWYZNwBKV"
 # session_close_response = qualtrics.close_session("FS_8crClCLWYZNwBKV","SV_eDwgadvLh4MLhf7")
 # print (json.dumps(session_close_response, indent=4))
+
+
+# Create new event to ping server on completed responses
+# qualtrics.create_completedResponse_event("SV_3x5FBTgEtBVZdpH", "http://fc014752.ngrok.io")
+
+
+
+
+
+
+
