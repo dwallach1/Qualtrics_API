@@ -1,3 +1,4 @@
 *.zip
 downloads/
 .DS_Store
+*.pyc
