@@ -16,6 +16,11 @@ class Qualtrics(object):
 	def __init__(self, apiToken, dataCenter):
 		"""
 		Initalize new Qualtrics object
+
+		:apiToken: - string - the API token found in your account settings > Qualtrics IDs
+		:dataCenter: - string - the datacenter your data is stored in
+
+		Returns a new initalized object 
 		"""
 		self.apiToken = apiToken
 		self.dataCenter = dataCenter
@@ -75,7 +80,7 @@ class Qualtrics(object):
 		return ids
 
 
-	def download_responses(self, surveyId, format_type="csv", path=None):
+	def download_responses(self, surveyId, format_type="csv", path=None, download=True):
 		"""
 		Download all responses from a survey
 
@@ -125,6 +130,10 @@ class Qualtrics(object):
 			if verbose: print ("error downloading file for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
 			return
 
+		if not download:
+			if verbose: print ("Download has been turned off, returning content")
+			return response.content
+
 		if path == None:
 			if not os.path.exists('downloads'):
 				os.mkdir('downloads')
@@ -137,7 +146,7 @@ class Qualtrics(object):
 
 
 		if verbose: print ("successfully downloaded file\ndone.")
-		return
+		return None
 
 
 	def download_all_responses(self, format_type="csv", path=None):
@@ -253,24 +262,34 @@ class Qualtrics(object):
 		"""
 		Builds out the data to be sent back to update 
 
-		:session: - string -
-		:QIDs: - list -
-		:answers: - list -
-		:anvance: - bool -
+		:session: - JSON - the JSON returned from either create_session or get_session
+		:QIDs: - list - list of question IDs 
+		:answers: - list - list of associated answers to each question
+		:anvance: - bool - required parameter of the update session API call
+
+		Returns the data to be passed with the update_session API call
 		"""
 
-		data = {}
+		if advance:
+			advance = "true"
+		else:
+			advance = "false"
+
 		answer_builder = []
 
 		for i, QID in enumerate(QIDs):
 			if session['result']['question']['type'] == 'mc':
 				if isinstance(answers[i], list):
+					for j in answers[i]:
 
-					pass
+						pass
+
+
 
 				elif isinstance(answers[i], int) or isinstance(answers[i], str):
-
-					pass
+					answer_str = '"{{ {0}": {{"{1}": {{ "selected": true }} }} }}'.format(QID, answers[i])
+					answer_builder.append(answer_str)
+					
 
 				else:
 					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
@@ -279,45 +298,118 @@ class Qualtrics(object):
 			elif session['result']['question']['type'] == 'te':
 
 				if isinstance(answers[i], str):
-					answer_str = '"{0}: "{1}"'.format(QID, answers[i])
+					answer_str = '"{0}": "{1}"'.format(QID, answers[i])
 					answer_builder.append(answer_str)
+
+				else:
+					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
+					return -1
 
 			else:
 				print ("Question type {0} is not currently supported by the session API (QID: {1})".format(session['result']['question']['type'], QID))
 				return -1
 
 
+		answers = ""
+		for answer in answer_builder:
+			answers += answer + ','
+		data = '{"advance": {0}, "responses": {{  {1} }} }'.format(advance, answers)
+		print (data)
 		return data
 
 
-	def update_response(self,):
+	def update_response(self, surveyId, responseId, embeddedData):
 		"""
+		Update embedded data of survey response
+
+		:surveyId: - string - 
+		:responseId: - string - 
+		:embeddedData: - string of dict - 
+
+		Returns response code of API call (200 = success)
 		"""
-		pass
+		baseUrl = "https://{0}.qualtrics.com/API/v3/responses/{1}".format(self.dataCenter, responseId)
+		data = '{{"surveyId": "{0}", "embeddedData": {1}}}'.format(surveyId, embeddedData)
+		# print (data)
+		response = requests.put(baseUrl, headers=self.headers, data=data)
+
+		return response.status_code
 
 
-	def delete_response(self, ):
+	def delete_response(self, surveyId, responseId, decrementQuotas=True):
 		"""
+		Delete a survey response
+
+		:surveyId: - string - the ID of the survey you want to delete the responses from
+		:responseId: - string - the ID of the response you want to delete
+		:decrementQuotas: - boolean -  whether or not you want to decrement the quotas associated with the responses
+
+		Returns response code of API call (200 = success)
 		"""
-		pass
+		if decrementQuotas:
+			decrementQuotas = "true"
+		else:
+			decrementQuotas = "false"
+
+		baseUrl = "https://{0}.qualtrics.com/API/v3/responses/{1}?surveyId={2}&decrementQuotas={3}".format(self.dataCenter, responseId, surveyId, decrementQuotas)
+		print (baseUrl)
+		response = requests.delete(baseUrl, headers=self.headers)
+
+		return response.status_code
+		
 
 
-	def delete_all_responses(self,):
+	def delete_all_responses(self, surveyId, decrementQuotas=True):
 		"""
+		Delete all the responses in a survey
+
+		:surveyId: - string - the ID of the survey you want to delete the responses from
+		:decrementQuotas: - boolean - whether or not you want to decrement the quotas associated with the responses
+
+		Returns a list of the responseIds that errored
 		"""
-		pass
+		content = self.download_responses(surveyId)
+
+		print (content)
+
+		rID = 0
+		responseIds = []
+
+		for i, line in enumerate(content):
+			if i == 0:
+				for j, val in enumerate(line.split(',')):
+					if val == "ResponseId":
+						rID = j
+			else:
+				responseIds.append(line.split(',')[rID])
+
+		total = len(responseIds)
+		errors = []
+		for responseId in responseIds:
+			val = self.delete_response(surveyId, responseId)
+			if val != 200:
+				errors.append(responseId)
+
+		print ("Deleted {}/{} responses".format(total - len(errors), total))
+		return errors
 
 
 
 	def create_completedResponse_event(self, surveyId, serverURL):
 		"""
+		Create an endpoint for QUaltrics to ping when a completed response is processed
+
+		:surveyId: - string - the ID of the survey you want to delete the responses from
+		:serverURL: - string - the server endpoint for Qualtrics to ping
+
+		Returns the response from the API call
 		"""
 		baseUrl = "https://{0}.qualtrics.com/API/v3/eventsubscriptions".format(self.dataCenter)
 		data = '{"topics": "surveyengine.completedResponse.{}", "publicationUrl": "{}"}'.format(surveyId, serverURL)
-		print(data)
+		# print(data)
 		response = requests.post(baseUrl, headers=self.headers, data=data)
 
-		print (json.dumps(response.json(), indent=4))
+		return response.json()
 
 
 

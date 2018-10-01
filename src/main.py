@@ -68,6 +68,19 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 # qualtrics.create_completedResponse_event("SV_3x5FBTgEtBVZdpH", "http://fc014752.ngrok.io")
 
 
+# Update Response
+# update_response = qualtrics.update_response("SV_0jFSMFGDOcSzZB3", "R_1gzrJOwkdmiPVG6", '{"Round": 100, "NewRound": 200}')
+# print (update_response)
+
+
+# Delete Response
+# delete_response = qualtrics.delete_response("SV_0jFSMFGDOcSzZB3", "R_27VecyogvdbtZtQ", True)
+# print (delete_response)
+
+
+# Delete All Responses
+
+
 
 
 
