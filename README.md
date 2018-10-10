@@ -8,8 +8,8 @@ Methods for all public APIs listed [here](https://api.qualtrics.com/)
 
 The currently (constantly updating) supported methods:
 
-* `list_surveys` ((documentation)[https://api.qualtrics.com/docs/list-surveys 	])
-* `get survey` ((documentation)[https://api.qualtrics.com/docs/get-survey ])
+* `list_surveys` ([documentation](https://api.qualtrics.com/docs/list-surveys))
+* `get survey` ([documentation](https://api.qualtrics.com/docs/get-survey))
 
 ### Custom Methods
 
