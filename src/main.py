@@ -20,7 +20,9 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 
 
 
-qualtrics.retake_response("SV_429KwiiOkFTCucR", "R_8Dls5pWKJcAuPfT", delete=False)
+# qualtrics.retake_response("SV_429KwiiOkFTCucR", "R_8Dls5pWKJcAuPfT", delete=False)
+
+qualtrics.retake_response("SV_bEJ7SqCPmZq83wF", "R_24oCBhqEEK8xJj7")
 
 
 # qualtrics.list_directorry_contacts()
