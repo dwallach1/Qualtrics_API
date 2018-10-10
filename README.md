@@ -16,7 +16,7 @@ Additional methods:
 
 
 * `retake_response` allows you to reake a repsonse. Old surveys built on Qualtrics' old engine (not JFE) are not compatible with this call. This is because how the baseURL is formatted. 
-<br/>
+<br />
 Parameters: 
 	* `surveyId` (string) --> the survey that the response is associated with
 	* `responseId` (string) --> the specific ID of the response you want to retake
@@ -24,7 +24,7 @@ Parameters:
 
 
 * `retake_unfinished_responses` allows you to reake all unfinished repsonses assicated with a survey. Old surveys built on Qualtrics' old engine (not JFE) are not compatible with this call. This is because how the baseURL is formatted. 
-<br/>
+<br />
 Parameters: 
 	* `surveyId` (string) --> the survey that the response is associated with
 	* `delete` (bool) --> defaults to False, this allows you to either delete the old response that you are retaking or "retake as new response" and keep the prior response as well
