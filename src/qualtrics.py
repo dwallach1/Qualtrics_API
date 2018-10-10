@@ -3,6 +3,7 @@ import requests
 import io
 import zipfile
 import json
+import csv
 import datetime
 import time
 from selenium import webdriver
@@ -34,7 +35,6 @@ class Qualtrics(object):
 						"X-API-TOKEN": apiToken,
 						"Content-Type": "application/json",
 					}
-
 
 
 	def list_directorry_contacts(self):
@@ -194,7 +194,7 @@ class Qualtrics(object):
 				for zipinfo in thezip.infolist():
 					with thezip.open(zipinfo) as thefile:
 						 data = thezip.read(zipinfo.filename)
-						 return json.loads(data)
+						 return data
 
 		if path == None:
 			if not os.path.exists('downloads'):
@@ -270,7 +270,7 @@ class Qualtrics(object):
 				for zipinfo in thezip.infolist():
 					with thezip.open(zipinfo) as thefile:
 						 data = thezip.read(zipinfo.filename)
-						 return json.loads(data)
+						 return data
 
 
 		if path == None:
@@ -549,9 +549,9 @@ class Qualtrics(object):
 		return response.json()
 
 
-
 	def retake_response(self, surveyId, responseId, delete=True):
 		"""
+		look into selenium headless approach
 		"""
 		baseUrl = "https://{0}.qualtrics.com/jfe/form/{1}?Q_R={2}&Q_R_DEL={3}".format(self.dataCenter, surveyId, responseId, int(delete))
 
@@ -570,12 +570,33 @@ class Qualtrics(object):
 				return
 
 
+		browser.close()
+		return
 
 
-	def retake_all_responses(self, surveyId):
+	def retake_unfinished_responses(self, surveyId):
 		"""
 		"""
-		pass
+		
+		data = self.download_responses(surveyId, format_type="json", download=False)
+
+
+		data = json.loads(data)
+		i = 0
+		j = 0
+		for obj in data['responses']:
+			j += 1
+			if obj['Finished'] == 0:
+				self.retake_response(surveyId, obj['ResponseID'])
+				i += 1
+			
+
+			# print (obj['ResponseID'], obj["Finished"])
+
+		print ("Finished retaking {} unfinished responses out of {} total responses".format(i, j))
+		return None
+
+
 
 
 
