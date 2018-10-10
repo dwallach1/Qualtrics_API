@@ -334,6 +334,65 @@ def Qualtrics_connect():
 
 	
 
+	def answer_questions(self, session, QIDs, answers, advance=False):
+		"""
+		Builds out the data to be sent back to update 
+
+		:session: - JSON - the JSON returned from either create_session or get_session
+		:QIDs: - list - list of question IDs 
+		:answers: - list - list of associated answers to each question
+		:anvance: - bool - required parameter of the update session API call
+
+		Returns the data to be passed with the update_session API call
+		"""
+
+		if advance:
+			advance = "true"
+		else:
+			advance = "false"
+
+		answer_builder = []
+
+		for i, QID in enumerate(QIDs):
+			if session['result']['question']['type'] == 'mc':
+				if isinstance(answers[i], list):
+					for j in answers[i]:
+
+						pass
+
+
+
+				elif isinstance(answers[i], int) or isinstance(answers[i], str):
+					answer_str = '"{{ {0}": {{"{1}": {{ "selected": true }} }} }}'.format(QID, answers[i])
+					answer_builder.append(answer_str)
+					
+
+				else:
+					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
+					return -1
+
+			elif session['result']['question']['type'] == 'te':
+
+				if isinstance(answers[i], str):
+					answer_str = '"{0}": "{1}"'.format(QID, answers[i])
+					answer_builder.append(answer_str)
+
+				else:
+					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
+					return -1
+
+			else:
+				print ("Question type {0} is not currently supported by the session API (QID: {1})".format(session['result']['question']['type'], QID))
+				return -1
+
+
+		answers = ""
+		for answer in answer_builder:
+			answers += answer + ','
+		data = '{"advance": {0}, "responses": {{  {1} }} }'.format(advance, answers)
+		print (data)
+		return data
+
 
 
 Qualtrics_connect()

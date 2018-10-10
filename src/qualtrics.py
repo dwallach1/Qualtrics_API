@@ -64,21 +64,41 @@ class Qualtrics(object):
 		print (json.dumps(response.json(), indent=4))
 
 
-	def list_groups(self):
+	def list_groups(self, divisionId):
 		"""
+		Get information about a group associated with a division. 
+		Must be a Brand Admin to run this call.
+
+		:divisionId: - string - the ID of the division you are querying groups for
+
+		returns JSON response
+
 		"""
 		baseUrl = "https://{0}.qualtrics.com/API/v3/groups".format(self.dataCenter)
 		response = requests.get(baseUrl, headers=self.headers)
+
+		if response.status_code != 200:
+			if verbose: print ("Error listing groups -- aborted with status_code {}".format(response.status_code))
+			return response.status_code
+
 		return response.json()
 
 
 	def get_group(self, groupId):
 		"""
+		Get information about a group. Must be a Brand Admin to run this call.
+
+		:groupId: - string - the ID of the group you are querying for
+
+		returns JSON response
 		"""
 		baseUrl = "https://{0}.qualtrics.com/API/v3/groups/{1}".format(self.dataCenter, groupId)
-
 		response = requests.get(baseUrl, headers=self.headers)
-		print (json.dumps(response.json(), indent=4))
+		if response.status_code != 200:
+			if verbose: print ("Error getting group {} -- aborted with status_code {}".format(groupId, response.status_code))
+			return response.status_code
+
+		return response.json()
 
 
 	def get_survey(self, surveyId):
@@ -94,7 +114,7 @@ class Qualtrics(object):
 
 		if response.status_code != 200:
 			if verbose: print ("error making get request for survey ({0}) -- aborted with status_code {1}".format(surveyId, response.status_code))
-			return
+			return response.status_code
 
 		return response.json()
 
@@ -103,17 +123,17 @@ class Qualtrics(object):
 		"""
 		Get the Survey IDs of all surveys in your account
 
-		Returns an array of SurveyIds
+		Returns an array of Survey JSON objects
 		"""
 		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys".format(self.dataCenter)
 		response = requests.get(baseUrl, headers=self.headers)
 
 		if response.status_code != 200:
 			if verbose: print ("error making get request for surveys -- aborted with status_code {0}".format(response.status_code))
-			return
+			return response.status_code
 
-		print (json.dumps(response.json(), indent=4))
-		ids = []
+
+		elements = []
 		for element in response.json()['result']['elements']: ids.append("{}".format(element['id']))
 
 		nextPage = response.json()['result']['nextPage']
@@ -124,12 +144,12 @@ class Qualtrics(object):
 
 			if response.status_code != 200:
 				if verbose: print ("error making get request for surveys (nextPage)-- aborted with status_code {0}".format(response.status_code))
-				return
+				return response.status_code
 
 			nextPage = response.json()['result']['nextPage']
-			for element in response.json()['result']['elements']: ids.append(element['id'])
+			elements.extend(response.json()['result']['elements'])
 
-		return ids
+		return elements
 
 
 	def download_responses(self, surveyId, format_type="csv", path=None, download=True):
@@ -288,19 +308,19 @@ class Qualtrics(object):
 		return None
 
 
-	def download_all_responses(self, format_type="csv", path=None):
+	def download_all_responses(self, format_type="csv"):
 		"""
 		Download all responses from each survey in your projects page
 
 		:format_type: - string - can be csv, json, or spss (defaults to "csv")
-		:path: - string - path to download the data (defaults to None)
 
 		Returns None
 		"""
-		surveyIds = get_all_surveys()
+		surveyIds = [s['id'] for s in forget_all_surveys()]
 		if verbose: print ("found {} total surveys in your library".format(len(surveyIds)))
 		for surveyId in surveyIds:
-			download_responses(surveyId, "csv")
+			download_responses(surveyId, format_type)
+		return None
 
 
 	def create_sesssion(self, surveyId):
@@ -395,66 +415,6 @@ class Qualtrics(object):
 		else:
 			print ("Successfully closed the survey session.")
 		return response.json()
-
-
-	def answer_questions(self, session, QIDs, answers, advance=False):
-		"""
-		Builds out the data to be sent back to update 
-
-		:session: - JSON - the JSON returned from either create_session or get_session
-		:QIDs: - list - list of question IDs 
-		:answers: - list - list of associated answers to each question
-		:anvance: - bool - required parameter of the update session API call
-
-		Returns the data to be passed with the update_session API call
-		"""
-
-		if advance:
-			advance = "true"
-		else:
-			advance = "false"
-
-		answer_builder = []
-
-		for i, QID in enumerate(QIDs):
-			if session['result']['question']['type'] == 'mc':
-				if isinstance(answers[i], list):
-					for j in answers[i]:
-
-						pass
-
-
-
-				elif isinstance(answers[i], int) or isinstance(answers[i], str):
-					answer_str = '"{{ {0}": {{"{1}": {{ "selected": true }} }} }}'.format(QID, answers[i])
-					answer_builder.append(answer_str)
-					
-
-				else:
-					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
-					return -1
-
-			elif session['result']['question']['type'] == 'te':
-
-				if isinstance(answers[i], str):
-					answer_str = '"{0}": "{1}"'.format(QID, answers[i])
-					answer_builder.append(answer_str)
-
-				else:
-					print ("unsupported answer type for multilpe choice question {}".format(type(answers[i])))
-					return -1
-
-			else:
-				print ("Question type {0} is not currently supported by the session API (QID: {1})".format(session['result']['question']['type'], QID))
-				return -1
-
-
-		answers = ""
-		for answer in answer_builder:
-			answers += answer + ','
-		data = '{"advance": {0}, "responses": {{  {1} }} }'.format(advance, answers)
-		print (data)
-		return data
 
 
 	def update_response(self, surveyId, responseId, embeddedData):
@@ -564,18 +524,22 @@ class Qualtrics(object):
 
 		while True:
 			try:
-				time.sleep(2)
+				# let page load first or else it will crash
+				time.sleep(3)
 				next_button = browser.find_element_by_id("NextButton").click()
-				time.sleep(5)
+				time.sleep(3)
 			except:
 				print ("closing browser session.")
+				# try to close browser because might already be closed 
 				try:
 					browser.close()
 				except:
-					return;
+					return
 				return
 
 		print ("closing browser session.")
+
+		# try to close browser because might already be closed 
 		try:
 			browser.close()
 		except:

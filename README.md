@@ -3,6 +3,19 @@
 
 Python scripts that use the Qualtrics APIs.
 
+```python
+
+import Qualtrics
+
+apiToken = os.environ["Q_API_TOKEN"]     
+dataCenter = os.environ["Q_DATA_CENTER"] 
+
+qualtrics = Qualtrics(apiToken, dataCenter)
+
+qualtrics.download_all_responses()
+
+```
+
 ### To Do
 
 [ ] add pagination to list_groups
@@ -18,6 +31,13 @@ The currently (constantly updating) supported methods:
 * `get survey` (Get Survey API [documentation](https://api.qualtrics.com/docs/get-survey))
 * `list_groups` (List Groups API [documentation](https://api.qualtrics.com/docs/list-groups)) 
 * `get_group` (Get Group API [documentation](https://api.qualtrics.com/docs/get-group))
+* `update_response`
+* `delete_response`
+* `create_session`
+* `get_session`
+* `update_session`
+* `close_session`
+
 
 ### Custom Methods
 
@@ -70,7 +90,15 @@ The currently (constantly updating) supported methods:
 
 		...
 
-* `download_all_responses` allows you to download all of the data associated with all of your surveys
+* `download_all_responses` allows you to download all of the data associated with all of your surveys. This call will create a directory called "downloads" at whatever path the call is made from. 
+	
+		Parameters
+
+		* format_type (string) --> defaults to csv, can be json, csv, csv2013, or spss
+
+
+* `delete_all_responses` allows you to delete all of your data and clear out all of your responses associated with all of your data.
+
 
 
 ## Dependencies 
