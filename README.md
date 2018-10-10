@@ -18,10 +18,13 @@ qualtrics.download_all_responses()
 
 ### To Do
 
-[ ] add pagination to list_groups
-[ ] add support for divisionId to list_groups
+- [ ] add pagination to list_groups
+- [ ] add support for divisionId to list_groups
+- [ ] add all options for creating completedResponse event handler
+- [ ] make delete_all_responses verify the user wants to perform the action
 
 
+### Native Methods
 
 Methods for all public APIs listed [here](https://api.qualtrics.com/)
 
@@ -98,6 +101,15 @@ The currently (constantly updating) supported methods:
 
 
 * `delete_all_responses` allows you to delete all of your data and clear out all of your responses associated with all of your data.
+
+
+* `create_completedResponse_event` attach a new completedResponse event to your survey to ping an external survey everytime a survey is completed.
+
+		Parameters
+
+		* `surveyId` (string) --> the survey that you want to attach the event to
+		* `serverURL` (string) --> the exposed server endpoint you want to ping
+
 
 
 
