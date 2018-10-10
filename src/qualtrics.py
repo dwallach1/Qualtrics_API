@@ -4,6 +4,9 @@ import io
 import zipfile
 import json
 import datetime
+import time
+from selenium import webdriver
+
 
 
 verbose = True
@@ -33,9 +36,6 @@ class Qualtrics(object):
 					}
 
 
-
-
- 	
 
 	def list_directorry_contacts(self):
 		"""
@@ -68,9 +68,8 @@ class Qualtrics(object):
 		"""
 		"""
 		baseUrl = "https://{0}.qualtrics.com/API/v3/groups".format(self.dataCenter)
-
 		response = requests.get(baseUrl, headers=self.headers)
-		print (response.json())
+		return response.json()
 
 
 	def get_group(self, groupId):
@@ -551,10 +550,28 @@ class Qualtrics(object):
 
 
 
-	def retake_response(self, surveyId, responseId):
+	def retake_response(self, surveyId, responseId, brand=None, delete=True):
 		"""
 		"""
-		pass
+		if brand:
+			baseUrl = "https://{0}.{1}.qualtrics.com/jfe/form/{2}?Q_R={3}&Q_R_DEL={4}".format(brand, self.dataCenter, surveyId, responseId, int(delete))
+		else:
+			baseUrl = "https://{0}.qualtrics.com/jfe/form/{1}?Q_R={2}&Q_R_DEL={3}".format(self.dataCenter, surveyId, responseId, int(delete))
+		
+		print (baseUrl)
+
+		browser = webdriver.Chrome()
+
+		browser.get(baseUrl)
+
+		time.sleep(3)
+
+		browser.close()
+
+		# nextPage = browser.find_element_by_id("submit_button_id")
+		# button.click() 
+
+
 
 
 	def retake_all_responses(self, surveyId):

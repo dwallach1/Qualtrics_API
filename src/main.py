@@ -1,15 +1,14 @@
 import os
 import json
-
 from qualtrics import Qualtrics
 
 
-# # TA
+# TA
 apiToken = os.environ["Q_API_TOKEN"]     
 dataCenter = os.environ["Q_DATA_CENTER"] 
 # library = os.environ["Q_LIBRARY"] 
 
-# # # CO
+# CO
 apiToken = os.environ["Q_API_TOKEN_1"]     
 dataCenter = os.environ["Q_DATA_CENTER_1"]
 # library = os.environ["Q_LIBRARY_1"] 
@@ -18,6 +17,10 @@ dataCenter = os.environ["Q_DATA_CENTER_1"]
 
 
 qualtrics = Qualtrics(apiToken, dataCenter)
+
+
+
+qualtrics.retake_response("SV_429KwiiOkFTCucR", "R_8Dls5pWKJcAuPfT", delete=False)
 
 
 # qualtrics.list_directorry_contacts()
@@ -37,10 +40,9 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 
 
 #Download all responses for single survey
-result = qualtrics.download_responses("SV_b2QprbVgmMwO2fr", format_type="json", download=False)
+# result = qualtrics.download_responses("SV_b2QprbVgmMwO2fr", format_type="json", download=False)
 # result = qualtrics.download_responses_new("SV_cC8qHYlPlC0koZL", download=False)
-print (json.dumps(result, indent=4))
-# print (result)
+# print (json.dumps(result, indent=4))
 
 
 # Download all repsonses for all surveys in project page
