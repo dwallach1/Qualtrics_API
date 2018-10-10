@@ -551,26 +551,35 @@ class Qualtrics(object):
 
 	def retake_response(self, surveyId, responseId, delete=True):
 		"""
-		look into selenium headless approach
+		1. look into selenium headless approach
+		2. not compatabile with surveys built on old engine 
+		3. not compatabile with force response (maybe request response? need to test)
 		"""
 		baseUrl = "https://{0}.qualtrics.com/jfe/form/{1}?Q_R={2}&Q_R_DEL={3}".format(self.dataCenter, surveyId, responseId, int(delete))
 
-		# print ("Connecting to: ", baseUrl)
+		print ("Connecting to: ", baseUrl)
 
 		browser = webdriver.Chrome()
 		browser.get(baseUrl)
 
-		next_page = True
-		while next_page:
+		while True:
 			try:
+				time.sleep(2)
 				next_button = browser.find_element_by_id("NextButton").click()
-				time.sleep(3)
+				time.sleep(5)
 			except:
-				browser.close()
+				print ("closing browser session.")
+				try:
+					browser.close()
+				except:
+					return;
 				return
 
-
-		browser.close()
+		print ("closing browser session.")
+		try:
+			browser.close()
+		except:
+			return
 		return
 
 
