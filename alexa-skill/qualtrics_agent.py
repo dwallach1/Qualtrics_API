@@ -267,7 +267,6 @@ def create_survey_session():
 		return None
 
 	
-	
 	print ("Successfully created new survey session ({0}).".format(survey_sessionId))
 	return response.json()
 
@@ -324,7 +323,7 @@ def Qualtrics_connect():
 	questions = survey_session['result']['questions']
 	for question in questions:
 		ask(question)
-		
+
 	# update_survey_session(survey_sessionId)
 	# close_survey_session(survey_sessionId)
 

@@ -1,11 +1,3 @@
-/*
-*
-*   Simple server to test Events
-*
-*
-*
-*/
-
 
 
 // First we need to import the HTTP module. This module contains all the logic for dealing with HTTP requests.
@@ -17,14 +9,14 @@ const PORT=80;
 // We create a function which handles any requests and sends a simple response
 function handleRequest(request, response){
   // console.log(request);
-   let body = '';
-    request.on('data', chunk => {
-        body += chunk.toString(); // convert Buffer to string
-    });
-    request.on('end', () => {
-        console.log(body);
-        request.end('ok');
-    });
+   // let body = '';
+   //  request.on('data', chunk => {
+   //      body += chunk.toString(); // convert Buffer to string
+   //  });
+    // request.on('end', () => {
+    //     console.log(body);
+    //     request.end('ok');
+    // });
   response.end('Ngrok is working! -  Path Hit: ' + request.url);
 }
 

@@ -2,3 +2,5 @@
 downloads/
 .DS_Store
 *.pyc
+*.log
+*.txt

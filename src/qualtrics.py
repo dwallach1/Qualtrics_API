@@ -555,7 +555,7 @@ class Qualtrics(object):
 		"""
 		baseUrl = "https://{0}.qualtrics.com/jfe/form/{1}?Q_R={2}&Q_R_DEL={3}".format(self.dataCenter, surveyId, responseId, int(delete))
 
-		print ("Connecting to: ", baseUrl)
+		# print ("Connecting to: ", baseUrl)
 
 		browser = webdriver.Chrome()
 		browser.get(baseUrl)
@@ -564,7 +564,7 @@ class Qualtrics(object):
 		while next_page:
 			try:
 				next_button = browser.find_element_by_id("NextButton").click()
-				time.sleep(1)
+				time.sleep(3)
 			except:
 				browser.close()
 				return
@@ -586,14 +586,13 @@ class Qualtrics(object):
 		j = 0
 		for obj in data['responses']:
 			j += 1
-			if obj['Finished'] == 0:
+			if int(obj['Finished']) == 0:
 				self.retake_response(surveyId, obj['ResponseID'])
 				i += 1
 			
-
 			# print (obj['ResponseID'], obj["Finished"])
 
-		print ("Finished retaking {} unfinished responses out of {} total responses".format(i, j))
+		print ("Finished retaking {} unfinished responses.".format(i))
 		return None
 
 
