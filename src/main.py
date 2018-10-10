@@ -5,29 +5,42 @@ from qualtrics import Qualtrics
 
 
 # # TA
-# apiToken = os.environ["Q_API_TOKEN"]     
-# dataCenter = os.environ["Q_DATA_CENTER"] 
+apiToken = os.environ["Q_API_TOKEN"]     
+dataCenter = os.environ["Q_DATA_CENTER"] 
 # library = os.environ["Q_LIBRARY"] 
 
-# CO
+# # # CO
 apiToken = os.environ["Q_API_TOKEN_1"]     
 dataCenter = os.environ["Q_DATA_CENTER_1"]
-library = os.environ["Q_LIBRARY_1"] 
+# library = os.environ["Q_LIBRARY_1"] 
+
+
 
 
 qualtrics = Qualtrics(apiToken, dataCenter)
 
 
+# qualtrics.list_directorry_contacts()
+# qualtrics.get_partials()
+
+# qualtrics.list_groups()
+
+# qualtrics.get_group("GR_1ELD578yYpROTlj")
+
+# qualtrics.get_all_surveys()
 
 # Get JSON of survey
-# print (json.dumps(qualtrics.get_survey("SV_b2QprbVgmMwO2fr"), indent=4))
+# print (json.dumps(qualtrics.get_survey("SV_b3eYEKqCcIHwbhX"), indent=4))
 
 # Get all surveyIds from projects page
 # print (qualtrics.get_all_surveys())
 
 
-# Download all responses for single survey
-# qualtrics.download_responses("SV_b2QprbVgmMwO2fr")
+#Download all responses for single survey
+result = qualtrics.download_responses("SV_b2QprbVgmMwO2fr", format_type="json", download=False)
+# result = qualtrics.download_responses_new("SV_cC8qHYlPlC0koZL", download=False)
+print (json.dumps(result, indent=4))
+# print (result)
 
 
 # Download all repsonses for all surveys in project page
@@ -35,7 +48,7 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 
 
 # Try to download shared project
-# qualtrics.download_responses("SV_eLPcHbH0EAg3yrX")
+# qualtrics.download_responses_new("SV_eLPcHbH0EAg3yrX")
 # print (json.dumps(qualtrics.get_survey("SV_5aufmvWxteSDxJz"), indent=4))
 
 
@@ -64,9 +77,9 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 # print (json.dumps(session_close_response, indent=4))
 
 
-# Create new event to ping server on completed responses
-# qualtrics.create_completedResponse_event("SV_3x5FBTgEtBVZdpH", "http://fc014752.ngrok.io")
-
+# Create new completedResponse event to ping server on completed responses
+# status = qualtrics.create_completedResponse_event("SV_b3eYEKqCcIHwbhX", "http://f4b63c7c.ngrok.io")
+# print (status)
 
 # Update Response
 # update_response = qualtrics.update_response("SV_0jFSMFGDOcSzZB3", "R_1gzrJOwkdmiPVG6", '{"Round": 100, "NewRound": 200}')
@@ -79,6 +92,8 @@ qualtrics = Qualtrics(apiToken, dataCenter)
 
 
 # Delete All Responses
+# errors = qualtrics.delete_all_responses("")
+# print (errors)
 
 
 
