@@ -152,21 +152,37 @@ class Qualtrics(object):
 		return elements
 
 
-	def download_responses(self, surveyId, format_type="csv", path=None, download=True):
+	def download_responses(self, surveyId, format_type="csv", path=None, download=True, **kwargs):
 		"""
 		Download all responses from a survey
 
 		:format_type: - string - can be csv, json, or spss (defaults to "csv")
 		:path: - string - path to download the data (defaults to None)
 
-		Returns None
+		Returns None or conetent of zip file
 		"""
 
 		if verbose: print ("Starting to download {}".format(surveyId))
 
+		valid_args = ["lastResponseId", "startDate", "endDate", "limit", "includedQuestionIds", "useLabels", "decimalSeparator", "seenUnansweredRecode", "useLocalTime"]
+
+		data = []
+		for key, value in kwargs.items():
+			if not (key in valid_args):
+				print ("invalid argument: {}".format(key))
+				return -1
+
+			data.append(" \"{}\": \"{}\" ".format(key, value))
+
+
+		data = '{{ {0}  }}'.format(','.join(data))
+		print (data)
+
+		
+
 		# data = '{{"surveyId": "{0}", "format": "{1}", "lastResponseId": "R_1r8Om56xflLiGWj"}}'.format(surveyId, format_type)
 		# data = '{{"surveyId": "{0}", "format": "{1}", "startDate": "2018-09-17T15:00:00Z", "endDate": "2018-10-21T00:00:00Z"}}'.format(surveyId, format_type)
-		data = '{{"surveyId": "{0}", "format": "{1}"}}'.format(surveyId, format_type)
+		# data = '{{"surveyId": "{0}", "format": "{1}"}}'.format(surveyId, format_type)
 		
 
 		baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports".format(self.dataCenter)
@@ -238,7 +254,7 @@ class Qualtrics(object):
 		:format_type: - string - can be csv, json, or spss (defaults to "csv")
 		:path: - string - path to download the data (defaults to None)
 
-		Returns None
+		Returns None or conetent of zip file
 		"""
 
 		if verbose: print ("Starting to download {}".format(surveyId))
@@ -492,6 +508,13 @@ class Qualtrics(object):
 		return errors
 
 
+	def create_subscription(self, publicationUrl, topics, encrypt=False, sharedKey=None):
+		"""
+		"""
+
+
+		pass
+
 	def create_completedResponse_event(self, surveyId, serverURL):
 		"""
 		Create an endpoint for QUaltrics to ping when a completed response is processed
@@ -571,8 +594,21 @@ class Qualtrics(object):
 
 
 
+	def tester(self, **kwargs):
+		"""
+		"""
+		valid_args = ["format_type", "surveyId", "lastResponseId", "startDate"]
+
+		data = []
+		for key, value in kwargs.items():
+			if not (key in valid_args):
+				print ("invalid argument: {}".format(key))
+				return -1
+
+			data.append(" \"{}\": \"{}\" ".format(key, value))
 
 
-
+		data = '{{ {0}  }}'.format(','.join(data))
+		print (data)
 
 

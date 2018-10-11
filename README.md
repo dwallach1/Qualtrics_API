@@ -22,6 +22,7 @@ qualtrics.download_all_responses()
 - [ ] add support for divisionId to list_groups
 - [ ] add all options for creating completedResponse event handler
 - [ ] make delete_all_responses verify the user wants to perform the action
+- [ ] change completedResponse to abstract the event
 
 
 ### Native Methods
@@ -72,12 +73,10 @@ The currently (constantly updating) supported methods:
 
 		* surveyId (string) --> the survey that the response is associated with
 		* format_type (string) --> defaults to csv, can be json, csv, csv2013, or spss
-		* lastResponseId (string) --> 	Export all responses received after the specified response. This parameter will be ignored if you use the startDate parameter
-		* startDate (string) --> Only export responses recorded after the specified date. Using this parameter causes the API to ignore lastResponseId
-		* endDate (string) --> Only exports responses recorded before the specified date
-		* limit (int) --> Maximum number of responses exported
+		* path (string) --> defaults to None, and then creates a downlaod folder at the path the call was made to download the data
+		* download (bool) --> defaults to True, if False it will not save the data, but instead unzip the response in memory and return its contents
 
-		...
+		* The rest of the accepted parameters can be found on the [API page](https://api.qualtrics.com/docs/create-response-export)
 
 * `download_responses_new` first creates the response export, then once the file is ready to be downloaded, it initates the download by either writing it to disk or unzipping the data in memory and returning it. This gets data from the new Data rather than the Legacy format.
 
@@ -86,12 +85,11 @@ The currently (constantly updating) supported methods:
 
 		* surveyId (string) --> the survey that the response is associated with
 		* format_type (string) --> defaults to csv, can be json, csv, csv2013, or spss
-		* lastResponseId (string) --> 	Export all responses received after the specified response. This parameter will be ignored if you use the startDate parameter
-		* startDate (string) --> Only export responses recorded after the specified date. Using this parameter causes the API to ignore lastResponseId
-		* endDate (string) --> Only exports responses recorded before the specified date
-		* limit (int) --> Maximum number of responses exported
+		* path (string) --> defaults to None, and then creates a downlaod folder at the path the call was made to download the data
+		* download (bool) --> defaults to True, if False it will not save the data, but instead unzip the response in memory and return its contents
 
-		...
+		* The rest of the accepted parameters can be found on the [API page](https://api.qualtrics.com/docs/create-response-export-new)
+
 
 * `download_all_responses` allows you to download all of the data associated with all of your surveys. This call will create a directory called "downloads" at whatever path the call is made from. 
 	
