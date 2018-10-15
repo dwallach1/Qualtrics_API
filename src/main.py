@@ -3,9 +3,9 @@ import json
 from qualtrics import Qualtrics
 
 
-# TA
-apiToken = os.environ["Q_API_TOKEN"]     
-dataCenter = os.environ["Q_DATA_CENTER"] 
+# CA
+# apiToken = os.environ["Q_API_TOKEN"]     
+# dataCenter = os.environ["Q_DATA_CENTER"] 
 # library = os.environ["Q_LIBRARY"] 
 
 # CO
@@ -14,15 +14,17 @@ dataCenter = os.environ["Q_DATA_CENTER_1"]
 # library = os.environ["Q_LIBRARY_1"] 
 
 
+# apiToken = "test"
+# dataCenter = "test"
 
 qualtrics = Qualtrics(apiToken, dataCenter)
 
 
-
+qualtrics.download_responses(surveyId="SV_cC8qHYlPlC0koZL", format="csv", lastResponseId="R_1o5b6zC3jCk0WD0", useLabels=True, limit=3)
 
 # qualtrics.retake_response("SV_429KwiiOkFTCucR", "R_8Dls5pWKJcAuPfT", delete=False)
 
-qualtrics.retake_response("SV_b2QprbVgmMwO2fr", "R_cu0qZTqV5zMkYnv")
+# qualtrics.retake_response("SV_b2QprbVgmMwO2fr", "R_cu0qZTqV5zMkYnv")
 
 # qualtrics.retake_unfinished_responses("SV_bEJ7SqCPmZq83wF")
 

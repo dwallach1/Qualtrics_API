@@ -6,7 +6,7 @@ import json
 import csv
 import datetime
 import time
-from selenium import webdriver
+# from selenium import webdriver
 
 
 
@@ -35,6 +35,48 @@ class Qualtrics(object):
 						"X-API-TOKEN": apiToken,
 						"Content-Type": "application/json",
 					}
+
+	
+	def data_builder(self, kwargs, valid_args, required_args):
+		"""
+		"""
+		data = []
+		i = 0
+		for key, value in kwargs.items():
+			
+			if not (key in valid_args.keys()):
+				print ("invalid argument: {}".format(key))
+				return -1
+
+			arg_type = valid_args[key]
+			print ("arg is {} and type is {}".format(key, arg_type))
+			
+			if arg_type == 'S':
+				data.append(" \"{}\": \"{}\" ".format(key, value))
+			elif arg_type == 'B':
+				if value:
+					value = "true"
+				else:
+					value = "false"
+				data.append(" \"{}\": {} ".format(key, value))
+			elif arg_type == 'I':
+				data.append(" \"{}\": {} ".format(key, value))
+			else:
+				# arg type is A (array)
+				data.append(" \"{}\": \"{}\" ".format(key, value))
+
+
+
+
+			i += 1
+
+		for arg in required_args:
+			if not (arg in kwargs.keys()):
+				print ("missing required argument: {}".format(arg))
+				return -1
+		data = '{{ {0}  }}'.format(','.join(data))
+		return data
+
 
 
 	def list_directorry_contacts(self):
@@ -152,7 +194,8 @@ class Qualtrics(object):
 		return elements
 
 
-	def download_responses(self, surveyId, format_type="csv", path=None, download=True, **kwargs):
+	# def download_responses(self, surveyId, format_type="csv",path=None, download=True, **kwargs):
+	def download_responses(self, path=None, download=True, **kwargs):
 		"""
 		Download all responses from a survey
 
@@ -162,28 +205,16 @@ class Qualtrics(object):
 		Returns None or conetent of zip file
 		"""
 
-		if verbose: print ("Starting to download {}".format(surveyId))
+		# if verbose: print ("Starting to download {}".format(surveyId))
 
-		valid_args = ["lastResponseId", "startDate", "endDate", "limit", "includedQuestionIds", "useLabels", "decimalSeparator", "seenUnansweredRecode", "useLocalTime"]
+		valid_args = { "surveyId": 'S', 
+						"format":'S', "lastResponseId": 'S', "startDate": 'S', 
+					  "endDate": 'S', "limit": 'I', "includedQuestionIds": 'A', "useLabels": 'B', "decimalSeparator": 'S', 
+					  "seenUnansweredRecode": 'S', "useLocalTime": 'B' }
+		required_args = ["surveyId", "format"]
+		data = self.data_builder(kwargs, valid_args, required_args)
 
-		data = []
-		for key, value in kwargs.items():
-			if not (key in valid_args):
-				print ("invalid argument: {}".format(key))
-				return -1
-
-			data.append(" \"{}\": \"{}\" ".format(key, value))
-
-
-		data = '{{ {0}  }}'.format(','.join(data))
-		print (data)
-
-		
-
-		# data = '{{"surveyId": "{0}", "format": "{1}", "lastResponseId": "R_1r8Om56xflLiGWj"}}'.format(surveyId, format_type)
-		# data = '{{"surveyId": "{0}", "format": "{1}", "startDate": "2018-09-17T15:00:00Z", "endDate": "2018-10-21T00:00:00Z"}}'.format(surveyId, format_type)
-		# data = '{{"surveyId": "{0}", "format": "{1}"}}'.format(surveyId, format_type)
-		
+		print (data)				
 
 		baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports".format(self.dataCenter)
 		response = requests.post(baseUrl, headers=self.headers, data=data)
@@ -594,21 +625,6 @@ class Qualtrics(object):
 
 
 
-	def tester(self, **kwargs):
-		"""
-		"""
-		valid_args = ["format_type", "surveyId", "lastResponseId", "startDate"]
 
-		data = []
-		for key, value in kwargs.items():
-			if not (key in valid_args):
-				print ("invalid argument: {}".format(key))
-				return -1
-
-			data.append(" \"{}\": \"{}\" ".format(key, value))
-
-
-		data = '{{ {0}  }}'.format(','.join(data))
-		print (data)
 
 
