@@ -6,7 +6,8 @@ import json
 import csv
 import datetime
 import time
-# from selenium import webdriver
+from copy import deepcopy
+from selenium import webdriver
 
 
 
@@ -39,17 +40,18 @@ class Qualtrics(object):
 	
 	def data_builder(self, kwargs, valid_args, required_args):
 		"""
+		Builds out the data parameters to be send in an API call
 		"""
 		data = []
 		i = 0
 		for key, value in kwargs.items():
-			
+
 			if not (key in valid_args.keys()):
 				print ("invalid argument: {}".format(key))
 				return -1
 
 			arg_type = valid_args[key]
-			print ("arg is {} and type is {}".format(key, arg_type))
+			# print ("arg is {} and type is {}".format(key, arg_type))
 			
 			if arg_type == 'S':
 				data.append(" \"{}\": \"{}\" ".format(key, value))
@@ -66,8 +68,6 @@ class Qualtrics(object):
 				data.append(" \"{}\": \"{}\" ".format(key, value))
 
 
-
-
 			i += 1
 
 		for arg in required_args:
@@ -76,7 +76,6 @@ class Qualtrics(object):
 				return -1
 		data = '{{ {0}  }}'.format(','.join(data))
 		return data
-
 
 
 	def list_directorry_contacts(self):
@@ -161,7 +160,7 @@ class Qualtrics(object):
 		return response.json()
 
 
-	def get_all_surveys(self):
+	def list_surveys(self):
 		"""
 		Get the Survey IDs of all surveys in your account
 
@@ -175,8 +174,9 @@ class Qualtrics(object):
 			return response.status_code
 
 
-		elements = []
-		for element in response.json()['result']['elements']: ids.append("{}".format(element['id']))
+		elements = response.json()['result']['elements']
+
+
 
 		nextPage = response.json()['result']['nextPage']
 
@@ -194,7 +194,6 @@ class Qualtrics(object):
 		return elements
 
 
-	# def download_responses(self, surveyId, format_type="csv",path=None, download=True, **kwargs):
 	def download_responses(self, path=None, download=True, **kwargs):
 		"""
 		Download all responses from a survey
@@ -205,22 +204,20 @@ class Qualtrics(object):
 		Returns None or conetent of zip file
 		"""
 
-		# if verbose: print ("Starting to download {}".format(surveyId))
-
-		valid_args = { "surveyId": 'S', 
-						"format":'S', "lastResponseId": 'S', "startDate": 'S', 
+		valid_args = { "surveyId": 'S', "format":'S', "lastResponseId": 'S', "startDate": 'S', 
 					  "endDate": 'S', "limit": 'I', "includedQuestionIds": 'A', "useLabels": 'B', "decimalSeparator": 'S', 
 					  "seenUnansweredRecode": 'S', "useLocalTime": 'B' }
 		required_args = ["surveyId", "format"]
 		data = self.data_builder(kwargs, valid_args, required_args)
 
-		print (data)				
+		if data == -1:
+			return -1
 
 		baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports".format(self.dataCenter)
 		response = requests.post(baseUrl, headers=self.headers, data=data)
 		
 		if response.status_code != 200:
-			if verbose: print ("error making post request to initate download for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
+			if verbose: print ("error making post request to initate download for survey {} -- aborted with status_code {}".format(kwargs["surveyId"], response.status_code))
 			return
 
 		if verbose: print ('successfully sent request to Qualtrics servers')
@@ -229,7 +226,7 @@ class Qualtrics(object):
 
 		done = False
 		while not done:
-			baseUrl = 'https://{0}.qualtrics.com/API/v3/responseexports/{1}'.format(self.dataCenter,key)
+			baseUrl = 'https://{0}.qualtrics.com/API/v3/responseexports/{1}'.format(self.dataCenter, key)
 			response = requests.get(baseUrl, headers=self.headers)
 
 			status = response.json()['result']['status']
@@ -241,16 +238,16 @@ class Qualtrics(object):
 				done = True
 
 			elif status == "cancelled" or status == "failed":
-				if verbose: print("error while generating download for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
+				if verbose: print("error while generating download for survey {} -- aborted with status_code {}".format(kwargs["surveyId"], response.status_code))
 				return
 
 		if verbose: print ("\nsuccessfully generated file, attempting to download...")
 
-		baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports/{1}/file".format(self.dataCenter,key)
+		baseUrl = "https://{0}.qualtrics.com/API/v3/responseexports/{1}/file".format(self.dataCenter, key)
 		response = requests.get(baseUrl, headers=self.headers, stream=True)
 
 		if response.status_code != 200:
-			if verbose: print ("error downloading file for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
+			if verbose: print ("error downloading file for survey {} -- aborted with status_code {}".format(kwargs["surveyId"], response.status_code))
 			return
 
 		if not download:
@@ -266,7 +263,7 @@ class Qualtrics(object):
 		if path == None:
 			if not os.path.exists('downloads'):
 				os.mkdir('downloads')
-			path = "downloads/{}_{}_response.zip".format(surveyId, format_type)
+			path = "downloads/{}_{}_response.zip".format(kwargs["surveyId"], kwargs["format"])
 		handle = open(path, "wb")
 		for chunk in response.iter_content(chunk_size=512):
 			if chunk: 
@@ -278,7 +275,7 @@ class Qualtrics(object):
 		return None
 
 
-	def download_responses_new(self, surveyId, format_type="csv", path=None, download=True):
+	def download_responses_new(self, surveyId, path=None, download=True, **kwargs):
 		"""
 		Download all responses from a survey
 
@@ -287,17 +284,26 @@ class Qualtrics(object):
 
 		Returns None or conetent of zip file
 		"""
+		valid_args = { "format":'S', "startDate": 'S', 
+					  "endDate": 'S', "limit": 'I', "useLabels": 'B', "seenUnansweredRecode": 'I',
+					   "multiSelectSeenUnansweredRecode": 'I', "includeDisplayOrder": 'B',
+					   "formatDecimalAsComma": 'B', "timeZone": 'S', "newlineReplacement": 'S', 
+					   "questionIds": 'A', "embeddedDataIds": 'A', "surveyMetadataIds": 'A'  
+					   }
+		required_args = ["format"]
+		data = self.data_builder(kwargs, valid_args, required_args)
 
-		if verbose: print ("Starting to download {}".format(surveyId))
+		if data == -1:
+			return -1
 
-		# data = '{{"surveyId": "{0}", "format": "{1}", "lastResponseId": "R_1r8Om56xflLiGWj"}}'.format(surveyId, format_type)
-		data = '{{"format": "{1}" }}'.format(surveyId, format_type)
 		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/export-responses".format(self.dataCenter, surveyId)
 		response = requests.post(baseUrl, headers=self.headers, data=data)
 
+		# print (response.json())
+
 		if response.status_code != 200:
 			if verbose: print ("error making post request to initate download for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
-			return
+			return response.status_code
 
 		if verbose: print ('successfully sent request to Qualtrics servers')
 
@@ -305,7 +311,7 @@ class Qualtrics(object):
 
 		done = False
 		while not done:
-			baseUrl = 'https://{0}.qualtrics.com/API/v3/surveys/{1}/export-responses/{2}'.format(self.dataCenter, surveyId,key)
+			baseUrl = 'https://{0}.qualtrics.com/API/v3/surveys/{1}/export-responses/{2}'.format(self.dataCenter, surveyId, key)
 			response = requests.get(baseUrl, headers=self.headers)
 
 			status = response.json()['result']['status']
@@ -318,18 +324,18 @@ class Qualtrics(object):
 
 			elif status == "cancelled" or status == "failed":
 				if verbose: print("error while generating download for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
-				return
+				return response.status_code
 
 		if verbose: print ("\nsuccessfully generated file, attempting to download...")
 
 		fileId = response.json()['result']['fileId']
 
-		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/export-responses/{2}/file".format(self.dataCenter,surveyId, fileId)
+		baseUrl = "https://{0}.qualtrics.com/API/v3/surveys/{1}/export-responses/{2}/file".format(self.dataCenter, surveyId, fileId)
 		response = requests.get(baseUrl, headers=self.headers, stream=True)
 
 		if response.status_code != 200:
 			if verbose: print ("error downloading file for survey {} -- aborted with status_code {}".format(surveyId, response.status_code))
-			return
+			return response.status_code
 
 		if not download:
 			if verbose: print ("Download has been turned off, returning content")
@@ -343,7 +349,7 @@ class Qualtrics(object):
 		if path == None:
 			if not os.path.exists('downloads'):
 				os.mkdir('downloads')
-			path = "downloads/{}_{}_response(new).zip".format(surveyId, format_type)
+			path = "downloads/{}_{}_response(new).zip".format(surveyId, kwargs["format"])
 		handle = open(path, "wb")
 		for chunk in response.iter_content(chunk_size=512):
 			if chunk: 
@@ -352,22 +358,23 @@ class Qualtrics(object):
 
 
 		if verbose: print ("successfully downloaded file\ndone.")
-		return None
+		return 1
 
 
-	def download_all_responses(self, format_type="csv"):
+	def download_all_responses(self, **kwargs):
 		"""
 		Download all responses from each survey in your projects page
 
 		:format_type: - string - can be csv, json, or spss (defaults to "csv")
 
-		Returns None
+		Returns the amount of errored calls
 		"""
-		surveyIds = [s['id'] for s in forget_all_surveys()]
+		surveyIds = [s['id'] for s in self.list_surveys()]
 		if verbose: print ("found {} total surveys in your library".format(len(surveyIds)))
+		successes = 0
 		for surveyId in surveyIds:
-			download_responses(surveyId, format_type)
-		return None
+			successes += self.download_responses_new(surveyId, **kwargs) == 1
+		return len(surveyIds) - successes
 
 
 	def create_sesssion(self, surveyId):
@@ -513,7 +520,20 @@ class Qualtrics(object):
 
 		Returns a list of the responseIds that errored
 		"""
-		content = download_responses(surveyId)
+
+
+		while True:
+			sys.stdout.write("Running this call will delete all of your data associated with ALL of your surveys\nDo you wish to continue? [y/n]")
+	        choice = raw_input().lower()
+
+	        if choice == 'n':
+	        	return
+	        elif choice == 'y':
+	        	break
+	        else:
+	        	sys.stdout.write("Please respond with a 'y' or 'n' as your answer\n")
+
+		content = download_responses_new(surveyId, fomat="csv", download=False)
 
 		print (content)
 
@@ -539,27 +559,26 @@ class Qualtrics(object):
 		return errors
 
 
-	def create_subscription(self, publicationUrl, topics, encrypt=False, sharedKey=None):
-		"""
-		"""
-
-
-		pass
-
-	def create_completedResponse_event(self, surveyId, serverURL):
+	def create_subscription(self, **kwargs):
 		"""
 		Create an endpoint for QUaltrics to ping when a completed response is processed
 
-		:surveyId: - string - the ID of the survey you want to delete the responses from
+		:topic: - string - the topic you want to create an event for
 		:serverURL: - string - the server endpoint for Qualtrics to ping
 
 		Returns the response from the API call
 		"""
-		baseUrl = "https://{0}.qualtrics.com/API/v3/eventsubscriptions".format(self.dataCenter)
-		data = '{{"topics": "surveyengine.completedResponse.{0}", "publicationUrl": "{1}"}}'.format(surveyId, serverURL)
-		# print(data)
-		response = requests.post(baseUrl, headers=self.headers, data=data)
 
+		valid_args = { "topics": 'S', "publicationUrl":'S' }
+		required_args = ["topics", "publicationUrl"]
+		data = self.data_builder(kwargs, valid_args, required_args)
+
+		if data == -1:
+			return -1
+
+
+		baseUrl = "https://{0}.qualtrics.com/API/v3/eventsubscriptions".format(self.dataCenter)
+		response = requests.post(baseUrl, headers=self.headers, data=data)
 		return response.json()
 
 
